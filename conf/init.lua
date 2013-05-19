@@ -19,7 +19,7 @@ a_url_max = 60; --10秒内允许的最大总访问次数
 ------------动态网页变量设置---------------
 
 d_url_max = 10; --10秒内允许的最大总访问次数
-jscc = 0;       --js防cc开关,0为关闭,1为开启. 
+jscc = 1;       --js防cc开关,0为关闭,1为开启. 
 white_time = 600; -- js跳转验证后白名单的时间.
 --ignore_spider = "baiduspider|googlebot"; --搜索引擎js防cc白名单,注释则不启用
 sql_filter = 1; --sql防注入开关,0为关闭,1为开启.

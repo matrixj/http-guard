@@ -64,22 +64,22 @@ if (ngx.req.get_method()=="GET") then
 	local uri = ngx.var.request_uri;
 	--开启js防cc攻击
 	if jscc==1 then
-		local jsjump = ngx.shared.jsjump
-		local jspara,flags=jsjump:get(ip)
-		local args = ngx.req.get_uri_args()
+		local jsjump = ngx.shared.jsjump;
+		local jspara,flags = jsjump:get(ip);
+		local args = ngx.req.get_uri_args();
 		if jspara then
 			if flags then
-				ngx.exec("@php")
+				ngx.exec("@php");
 			else
 				local p_jskey=''
 				if args["jskey"] and type(args["jskey"])=='table' then
-						p_jskey=args["jskey"][table.getn(args["jskey"])]
+						p_jskey=args["jskey"][table.getn(args["jskey"])];
 				else
-						p_jskey=args["jskey"]
+						p_jskey=args["jskey"];
 				end
 				if p_jskey and p_jskey==tostring(jspara) then
-					jsjump:set(ip,jspara,white_time,1)
-					ngx.exec("@php")
+					jsjump:set(ip,jspara,white_time,1);
+					ngx.exec("@php");
 				else
 					local url=''
 					if ngx.var.args then
