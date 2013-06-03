@@ -24,4 +24,4 @@ white_time = 600; -- js跳转验证后白名单的时间.
 --ignore_spider = "baiduspider|googlebot"; --搜索引擎js防cc白名单,注释则不启用
 sql_filter = 1; --sql防注入开关,0为关闭,1为开启.
 sql_rule = ".*[; ]?((or)|(insert)|(select)|(union)|(update)|(delete)|(replace)|(create)|(drop)|(alter)|(grant)|(load)|(show)|(exec))[\\s(]" --sql防注入规则
-filte_file_type = "php|jsp";--禁止上传的文件后缀,注释则不过滤
+filte_file_type = "(php|jsp)";--禁止上传的文件后缀,注释则不过滤

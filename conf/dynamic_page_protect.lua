@@ -113,7 +113,17 @@ if (ngx.req.get_method()=="GET") then
 		ngx.exec("@php");
 	end
 elseif (ngx.req.get_method()=="POST") then
-	ngx.exec("@php");
+	--是否开启防止php等文件上传
+	if filte_file_type then
+		ngx.req.read_body()
+		if ngx.req.get_body_data() and ngx.re.match(ngx.req.get_body_data(),"Content-Disposition: form-data;.*filename=\"(.*)."..filte_file_type.."\"","isjo") then
+			return 444
+		else
+			ngx.exec("@php");
+		end
+	else
+		ngx.exec("@php");
+	end	
 else
 	ngx.exec("@php");
 end
