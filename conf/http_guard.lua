@@ -1,9 +1,8 @@
+local cookie = ngx.var.cookie_httpguard;
 if not cookie then
 	cookie = 100000000;
 end
-
 local ip = ngx.var.binary_remote_addr;
-local cookie = ngx.var.cookie_httpguard;
 local uri = ngx.var.request_uri;
 local filename = ngx.var.request_filename;
 local ip_cookie = ngx.md5(table.concat({ip,cookie}));
@@ -140,73 +139,73 @@ else
 	end
 end
 
---请求过滤
-if (ngx.req.get_method()=="GET") then
-	--js跳转验证
-	if jscc==1 then
-		local js_verify = ngx.shared.js_verify;
-		local jspara,flags = js_verify:get(ip);
-		local args = ngx.req.get_uri_args();
-		if jspara then
-			if not flags then
-				local p_jskey=''
-				if args["jskey"] and type(args["jskey"])=='table' then
-						p_jskey=args["jskey"][table.getn(args["jskey"])];
-				else
-						p_jskey=args["jskey"];
-				end
-				if p_jskey and p_jskey==tostring(jspara) then
-					js_verify:set(ip,jspara,white_time,1);
-				else
-					local url=''
-					if ngx.var.args then
-						url=table.concat({ngx.var.scheme,"://",ngx.var.host,uri,"&jskey=",jspara});
+--只作用在php文件
+if ngx.re.match(filename,".*\\.php$","i") then
+	--请求过滤
+	if (ngx.req.get_method()=="GET") then	
+		--js跳转验证
+		if jscc==1 then
+			local js_verify = ngx.shared.js_verify;
+			local jspara,flags = js_verify:get(ip);
+			local args = ngx.req.get_uri_args();
+			if jspara then
+				if not flags then
+					local p_jskey=''
+					if args["jskey"] and type(args["jskey"])=='table' then
+							p_jskey=args["jskey"][table.getn(args["jskey"])];
 					else
-						url=table.concat({ngx.var.scheme,"://",ngx.var.host,uri,"?jskey=",jspara});
+							p_jskey=args["jskey"];
 					end
-					local jscode=table.concat({"<script>window.location.href='",url,"';</script>"});
-					ngx.header.content_type = "text/html"
-					ngx.print(jscode)
-					ngx.exit(200)
+					if p_jskey and p_jskey==tostring(jspara) then
+						js_verify:set(ip,jspara,white_time,1);
+					else
+						local url=''
+						if ngx.var.args then
+							url=table.concat({ngx.var.scheme,"://",ngx.var.host,uri,"&jskey=",jspara});
+						else
+							url=table.concat({ngx.var.scheme,"://",ngx.var.host,uri,"?jskey=",jspara});
+						end
+						local jscode=table.concat({"<script>window.location.href='",url,"';</script>"});
+						ngx.header.content_type = "text/html"
+						ngx.print(jscode)
+						ngx.exit(200)
+					end
 				end
-			end
-		else
-			math.randomseed( os.time() );
-			local random=math.random(100000,999999)
-			js_verify:set(ip,random,60)
-			local url=''
-			if ngx.var.args then
-				url=table.concat({ngx.var.scheme,"://",ngx.var.host,uri,"&jskey=",random});
 			else
-				url=table.concat({ngx.var.scheme,"://",ngx.var.host,uri,"?jskey=",random});
+				math.randomseed( os.time() );
+				local random=math.random(100000,999999)
+				js_verify:set(ip,random,60)
+				local url=''
+				if ngx.var.args then
+					url=table.concat({ngx.var.scheme,"://",ngx.var.host,uri,"&jskey=",random});
+				else
+					url=table.concat({ngx.var.scheme,"://",ngx.var.host,uri,"?jskey=",random});
+				end
+				local jscode=table.concat({"<script>window.location.href='",url,"';</script>"});
+				ngx.header.content_type = "text/html"
+				ngx.print(jscode)
+				ngx.exit(200)
 			end
-			local jscode=table.concat({"<script>window.location.href='",url,"';</script>"});
-			ngx.header.content_type = "text/html"
-			ngx.print(jscode)
-			ngx.exit(200)
 		end
-	end
-
-	--是否开启防sql注入	
-	if sql_filter then
-		url=ngx.unescape_uri(uri);
-		if ngx.re.match(url,sql_filter,"i") then
+		local url = ngx.unescape_uri(uri)
+		--是否开启防sql注入	
+		if sql_filter and ngx.re.match(url,sql_filter,"i") then
 			ngx.exit(444);
+		end	
+		--是否开启防xss攻击
+		if filte_xss and ngx.re.match(url,filte_xss,"i") then
+			ngx.exit(444)
 		end
-	end	
-	--是否开启防xss攻击
-	if filte_xss then
-		url=ngx.unescape_uri(uri)
-		if ngx.re.match(url,filte_xss,"i") then
+		--是否开启禁止某些目录解析php
+		if disabled_php_dir and ngx.re.match(url,disabled_php_dir,"i") then
+			ngx.exit(444)
+		end	
+			
+	elseif (ngx.req.get_method()=="POST") then
+		ngx.req.read_body()
+		--是否开启防止php等文件上传
+		if filte_file_type and ngx.req.get_body_data() and ngx.re.match(ngx.req.get_body_data(),"Content-Disposition: form-data;.*filename=\".*\\."..filte_file_type.."\"","isjo") then
 			ngx.exit(444)
 		end	
 	end
-elseif (ngx.req.get_method()=="POST") then
-	--是否开启防止php等文件上传
-	if filte_file_type then
-		ngx.req.read_body()
-		if ngx.req.get_body_data() and ngx.re.match(ngx.req.get_body_data(),"Content-Disposition: form-data;.*filename=\"(.*)."..filte_file_type.."\"","isjo") then
-			return 444
-		end
-	end	
-end
+end	
