@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 #保证当前是root用户
 if [[ $EUID -ne 0 ]]; then
