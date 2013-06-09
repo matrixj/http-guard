@@ -5,6 +5,7 @@ a_url = ngx.shared.a_url; --用于记录单用户所有请求次数
 d_url = ngx.shared.d_url; --用于记录动态页面的请求次数
 bad_user = ngx.shared.bad_user; --黑名单词典
 ban_time = 600; --黑名单时间,单位:秒.
+logpath = "/var/log" --日志存放路径
 
 --cookie标记开关,用来解决多用户共享ip上网误判的问题.
 --攻击者也可能利用cookie跳过限制

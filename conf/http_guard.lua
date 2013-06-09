@@ -1,5 +1,5 @@
 local cookie = ngx.var.cookie_httpguard or 100000000;
-local ip = ngx.var.binary_remote_addr;
+local ip = ngx.var.remote_addr;
 local uri = ngx.var.request_uri;
 local filename = ngx.var.request_filename;
 local ip_cookie = ngx.md5(table.concat({ip,cookie}));
@@ -21,6 +21,7 @@ if cookie_enable==1 then
 				if durl > d_url_max then
 					--加入黑名单
 					bad_user:set(ip_cookie,0,ban_time);
+					ngx.log(ngx.ERR,"http-guard: "..ip.." visit total urls "..durl.." times,exceed "..d_url_max.." limit ")
 					--断开连接
 					ngx.exit(444);
 				else
@@ -42,6 +43,7 @@ if cookie_enable==1 then
 				if surl > s_url_max then
 					--加入黑名单
 					bad_user:set(ip_cookie,0,ban_time);
+					ngx.log(ngx.ERR,"http-guard: "..ip.." visit single url "..surl.." times,exceed "..s_url_max.." limit ")
 					--断开连接
 					ngx.exit(444);
 				else
@@ -58,6 +60,7 @@ if cookie_enable==1 then
 				if aurl > a_url_max then
 					--加入黑名单
 					bad_user:set(ip_cookie,0,ban_time);
+					ngx.log(ngx.ERR,"http-guard: "..ip.." visit total urls "..aurl.." times,exceed "..a_url_max.." limit ")
 					--断开连接
 					ngx.exit(444);
 				else
@@ -85,6 +88,7 @@ else
 				if durl > d_url_max then
 					--加入黑名单
 					bad_user:set(ip,0,ban_time);
+					ngx.log(ngx.ERR,"http-guard: "..ip.." visit dynamic urls "..durl.." times,exceed "..d_url_max.." limit ")
 					--断开连接
 					ngx.exit(444);
 				else
@@ -106,6 +110,7 @@ else
 				if surl > s_url_max then
 					--加入黑名单
 					bad_user:set(ip,0,ban_time);
+					ngx.log(ngx.ERR,"http-guard: "..ip.." visit single url "..surl.." times,exceed "..s_url_max.." limit ")
 					--断开连接
 					ngx.exit(444);
 				else
@@ -122,6 +127,7 @@ else
 				if aurl > a_url_max then
 					--加入黑名单
 					bad_user:set(ip_cookie,0,ban_time);
+					ngx.log(ngx.ERR,"http-guard: "..ip.." visit total urls "..aurl.." times,exceed "..a_url_max.." limit ")
 					--断开连接
 					ngx.exit(444);
 				else
@@ -187,10 +193,12 @@ if ngx.re.match(filename,".*\\.php$","i") then
 		local url = ngx.unescape_uri(uri)
 		--是否开启防sql注入	
 		if sql_filter and ngx.re.match(url,sql_filter,"i") then
+			ngx.log(ngx.ERR,"http-guard: "..ip.." sql inject")
 			ngx.exit(444);
 		end	
 		--是否开启防xss攻击
 		if filte_xss and ngx.re.match(url,filte_xss,"i") then
+			ngx.log(ngx.ERR,"http-guard: "..ip.." xss ")
 			ngx.exit(444)
 		end
 		--是否开启禁止某些目录解析php
@@ -202,6 +210,7 @@ if ngx.re.match(filename,".*\\.php$","i") then
 		ngx.req.read_body()
 		--是否开启防止php等文件上传
 		if filte_file_type and ngx.req.get_body_data() and ngx.re.match(ngx.req.get_body_data(),"Content-Disposition: form-data;.*filename=\".*\\."..filte_file_type.."\"","isjo") then
+			ngx.log(ngx.ERR,"http-guard: "..ip.." upload php shell "..ngx.req.get_body_data())
 			ngx.exit(444)
 		end	
 	end
