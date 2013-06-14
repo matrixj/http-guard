@@ -1,9 +1,5 @@
 --------------全局设置-----------------
-
-s_url = ngx.shared.s_url; --用于记录单用户请求同一url的次数
-a_url = ngx.shared.a_url; --用于记录单用户所有请求次数
-d_url = ngx.shared.d_url; --用于记录动态页面的请求次数
-bad_user = ngx.shared.bad_user; --黑名单词典
+http_guard = ngx.shared.http_guard; --声明一个字典
 ban_time = 600; --黑名单时间,单位:秒.
 
 --cookie标记开关,用来解决多用户共享ip上网误判的问题.
@@ -25,3 +21,15 @@ sql_filter = ".*[; ]?((or)|(insert)|(sleep)|(select)|(union)|(update)|(delete)|(
 filte_file_type = "(php|jsp)";--禁止上传的文件后缀,注释则不过滤
 filte_xss = "(<iframe|<script|<body|<img|javascript)";--过滤xss代码,注释则不过滤
 disabled_php_dir = "(.*/(attachments|js|upimg|images|css|uploadfiles|html|uploads|templets|static|template|data|inc|forumdata|upload|includes|cache|avatar)/\\w+\\.(php|jsp))"
+
+----------使用memcached时用到---------------
+
+--[[
+local memcached = require "resty.memcached"
+local memc, err = memcached:new(
+
+
+
+
+
+]]

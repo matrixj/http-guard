@@ -2,141 +2,146 @@ local cookie = ngx.var.cookie_httpguard or 100000000;
 local ip = ngx.var.remote_addr;
 local uri = ngx.var.request_uri;
 local filename = ngx.var.request_filename;
-local ip_cookie = ngx.md5(table.concat({ip,cookie}));
 
 --请求限速
-if cookie_enable==1 then
+if cookie_enable == 1 then
+	--定义cookie相关key
+	local ip_cookie = ngx.md5(table.concat({ip,cookie}));
+	local ip_cookie_durl = ngx.md5(table.concat({ip,cookie,"durl"}));
+	local ip_cookie_suri = ngx.md5(table.concat({ip,cookie,uri}));
+	local ip_cookie_aurl = ngx.md5(table.concat({ip,cookie,"aurl"}));
 	--计算ip与cookie的md5
-	local baduser,_=bad_user:get(ip_cookie)
+	local baduser, _ = http_guard:get(ip_cookie)
 	--判断此用户是否在黑名单
 	if baduser then
 		ngx.exit(444);
 	else
 		--当url请求的是php文件时
 		if ngx.re.match(filename,".*\\.php$","i") then
-			local durl = d_url:get(ip_cookie);
-			--判断a_url字典是否存在
+			local durl = http_guard:get(ip_cookie_durl);
+			--判断字典是否存在
 			if durl then
 				--判断此用户总访问数是否超过限制
 				if durl > d_url_max then
 					--加入黑名单
-					bad_user:set(ip_cookie,0,ban_time);
-					ngx.log(ngx.ERR,"http-guard: "..ip.." visit total urls "..durl.." times,exceed "..d_url_max.." limit ")
+					http_guard:set(ip_cookie,0,ban_time);
+					ngx.log(ngx.ERR,"http-guard: "..ip.." visit dynamic urls "..durl.." times,exceed "..d_url_max.." limit ")
 					--断开连接
 					ngx.exit(444);
 				else
 					--该用户访问此url次数加1
-					d_url:incr(ip_cookie,1);
+					http_guard:incr(ip_cookie_durl,1);
 				end	
 			else
-				--添加记录进a_url词典
-				d_url:set(ip_cookie,1,10);
+				--添加记录进词典
+				http_guard:set(ip_cookie_durl,1,10);
 			end	
 		else
-			--计算ip与cookie,uri的md5,用于限制单个url请求速度
-			local ip_cookie_uri = ngx.md5(table.concat({ip,cookie,uri}));
-			local surl = s_url:get(ip_cookie_uri);
-			local aurl = a_url:get(ip_cookie);
+			local surl = http_guard:get(ip_cookie_suri);
 			--判断s_url字典是否存在
 			if surl then
 				--判断此用户访问单个url是否超过限制
 				if surl > s_url_max then
 					--加入黑名单
-					bad_user:set(ip_cookie,0,ban_time);
+					http_guard:set(ip_cookie,0,ban_time);
 					ngx.log(ngx.ERR,"http-guard: "..ip.." visit single url "..surl.." times,exceed "..s_url_max.." limit ")
 					--断开连接
 					ngx.exit(444);
 				else
 					--该用户访问此url次数加1
-					s_url:incr(ip_cookie_uri,1);
+					http_guard:incr(ip_cookie_suri,1);
 				end
 			else
 				--添加记录进s_url词典
-				s_url:set(ip_cookie_uri,1,10);
+				http_guard:set(ip_cookie_suri,1,10);
 			end
 			--判断a_url字典是否存在
+			local aurl = http_guard:get(ip_cookie_auri);
 			if aurl then
 				--判断此用户总访问数是否超过限制
 				if aurl > a_url_max then
 					--加入黑名单
-					bad_user:set(ip_cookie,0,ban_time);
+					http_guard:set(ip_cookie,0,ban_time);
 					ngx.log(ngx.ERR,"http-guard: "..ip.." visit total urls "..aurl.." times,exceed "..a_url_max.." limit ")
 					--断开连接
 					ngx.exit(444);
 				else
 					--该用户访问此url次数加1
-					a_url:incr(ip_cookie,1);
+					http_guard:incr(ip_cookie_auri,1);
 				end	
 			else
 				--添加记录进a_url词典
-				a_url:set(ip_cookie,1,10);
+				http_guard:set(ip_cookie_auri,1,10);
 			end
 		end	
 	end
 else
-	local baduser,_=bad_user:get(ip)
+	--分别定义用于记录动态,静态,所有url的key
+	local ip_durl = ngx.md5(table.concat({ip,"durl"}));
+	local ip_suri = ngx.md5(table.concat({ip,uri}));
+	local ip_aurl = ngx.md5(table.concat({ip,"aurl"}));
+	local baduser,_=http_guard:get(ip)
 	--判断此用户是否在黑名单
 	if baduser then
 		ngx.exit(444);
 	else
 		--当请求的是php文件时
 		if ngx.re.match(filename,".*\\.php$","i") then
-			local durl = d_url:get(ip);
+			local durl = http_guard:get(ip_durl);
 			--判断a_url字典是否存在
 			if durl then
 				--判断此用户总访问数是否超过限制
 				if durl > d_url_max then
 					--加入黑名单
-					bad_user:set(ip,0,ban_time);
+					http_guard:set(ip,0,ban_time);
 					ngx.log(ngx.ERR,"http-guard: "..ip.." visit dynamic urls "..durl.." times,exceed "..d_url_max.." limit ")
 					--断开连接
 					ngx.exit(444);
 				else
 					--该用户访问此url次数加1
-					d_url:incr(ip,1);
+					http_guard:incr(ip_durl,1);
 				end	
 			else
-				--添加记录进a_url词典
-				d_url:set(ip,1,10);
+				--添加记录进词典
+				http_guard:set(ip_durl,1,10);
 			end	
 		else
 			--计算ip与cookie,uri的md5,用于限制单个url请求速度
-			local ip_uri = ngx.md5(table.concat({ip,uri}));
-			local surl = s_url:get(ip_uri);
-			local aurl = a_url:get(ip);
+			local surl = http_guard:get(ip_suri);
+			local aurl = http_guard:get(ip_aurl);
 			--判断s_url字典是否存在
 			if surl then
 				--判断此用户访问单个url是否超过限制
 				if surl > s_url_max then
 					--加入黑名单
-					bad_user:set(ip,0,ban_time);
+					http_guard:set(ip,0,ban_time);
 					ngx.log(ngx.ERR,"http-guard: "..ip.." visit single url "..surl.." times,exceed "..s_url_max.." limit ")
 					--断开连接
 					ngx.exit(444);
 				else
 					--该用户访问此url次数加1
-					s_url:incr(ip_uri,1);
+					http_guard:incr(ip_suri,1);
 				end
 			else
 				--添加记录进s_url词典
-				s_url:set(ip_uri,1,10);
+				http_guard:set(ip_suri,1,10);
 			end
 			--判断a_url字典是否存在
 			if aurl then
 				--判断此用户总访问数是否超过限制
 				if aurl > a_url_max then
 					--加入黑名单
-					bad_user:set(ip_cookie,0,ban_time);
+					http_guard:set(ip,0,ban_time);
 					ngx.log(ngx.ERR,"http-guard: "..ip.." visit total urls "..aurl.." times,exceed "..a_url_max.." limit ")
 					--断开连接
 					ngx.exit(444);
 				else
 					--该用户访问此url次数加1
-					a_url:incr(ip_cookie,1);
+					http_guard:incr(ip_aurl,1);
 				end	
 			else
 				--添加记录进a_url词典
-				a_url:set(ip_cookie,1,10);
+				http_guard:set(ip_aurl,1,10);
 			end
 		end	
 	end
@@ -148,8 +153,8 @@ if ngx.re.match(filename,".*\\.php$","i") then
 	if (ngx.req.get_method()=="GET") then	
 		--js跳转验证
 		if jscc==1 then
-			local js_verify = ngx.shared.js_verify;
-			local jspara,flags = js_verify:get(ip);
+			local ip_js = ngx.md5(table.concat({ip,"js"}));
+			local jspara,flags = http_guard:get(ip_js);
 			local args = ngx.req.get_uri_args();
 			if jspara then
 				if not flags then
@@ -160,7 +165,7 @@ if ngx.re.match(filename,".*\\.php$","i") then
 							p_jskey=args["jskey"];
 					end
 					if p_jskey and p_jskey==tostring(jspara) then
-						js_verify:set(ip,jspara,white_time,1);
+						http_guard:set(ip_js,jspara,white_time,1);
 					else
 						local url=''
 						if ngx.var.args then
@@ -177,7 +182,7 @@ if ngx.re.match(filename,".*\\.php$","i") then
 			else
 				math.randomseed( os.time() );
 				local random=math.random(100000,999999)
-				js_verify:set(ip,random,60)
+				http_guard:set(ip_js,random,60)
 				local url=''
 				if ngx.var.args then
 					url=table.concat({ngx.var.scheme,"://",ngx.var.host,uri,"&jskey=",random});
