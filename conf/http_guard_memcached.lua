@@ -177,6 +177,12 @@ end
 --只作用在php文件
 if ngx.re.match(filename,".*\\.php$","i") then
 	--请求过滤
+	local url = ngx.unescape_uri(uri)
+	--是否开启防sql注入	
+	if sql_filter and ngx.re.match(url,sql_filter,"i") then
+		ngx.log(ngx.ERR,"http-guard: "..ip.." sql inject")
+		ngx.exit(444);
+	end		
 	if (ngx.req.get_method()=="GET") then	
 		--js跳转验证
 		if jscc==1 then
@@ -222,12 +228,6 @@ if ngx.re.match(filename,".*\\.php$","i") then
 				ngx.exit(200)
 			end
 		end
-		local url = ngx.unescape_uri(uri)
-		--是否开启防sql注入	
-		if sql_filter and ngx.re.match(url,sql_filter,"i") then
-			ngx.log(ngx.ERR,"http-guard: "..ip.." sql inject")
-			ngx.exit(444);
-		end	
 		--是否开启防xss攻击
 		if filte_xss and ngx.re.match(url,filte_xss,"i") then
 			ngx.log(ngx.ERR,"http-guard: "..ip.." xss ")
