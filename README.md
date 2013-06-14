@@ -15,11 +15,7 @@ http-guard简介
 使用方法
 
     复制conf目录下的lua文件到/usr/local/nginx/conf下,在nginx.conf配置文件中的http代码段加入如下代码：
-        lua_shared_dict s_url 10m;
-        lua_shared_dict a_url 10m;
-        lua_shared_dict d_url 10m;
-        lua_shared_dict bad_user 10m;
-        lua_shared_dict js_verify 10m;    
+        lua_shared_dict http_guard 10m;
         init_by_lua_file 'conf/init.lua';
         header_filter_by_lua_file 'conf/send_cookie.lua';
         access_by_lua_file 'conf/http_guard.lua';
