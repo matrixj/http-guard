@@ -8,7 +8,7 @@ if cookie_enable == 1 then
 	--定义cookie相关key
 	local ip_cookie = ngx.md5(table.concat({ip,cookie}));
 	local ip_cookie_durl = ngx.md5(table.concat({ip,cookie,"durl"}));
-	local ip_cookie_suri = ngx.md5(table.concat({ip,cookie,uri}));
+	local ip_cookie_surl = ngx.md5(table.concat({ip,cookie,uri}));
 	local ip_cookie_aurl = ngx.md5(table.concat({ip,cookie,"aurl"}));
 	--计算ip与cookie的md5
 	local baduser, _ = http_guard:get(ip_cookie)
@@ -37,7 +37,7 @@ if cookie_enable == 1 then
 				http_guard:set(ip_cookie_durl,1,10);
 			end	
 		else
-			local surl = http_guard:get(ip_cookie_suri);
+			local surl = http_guard:get(ip_cookie_surl);
 			--判断s_url字典是否存在
 			if surl then
 				--判断此用户访问单个url是否超过限制
@@ -49,14 +49,14 @@ if cookie_enable == 1 then
 					ngx.exit(444);
 				else
 					--该用户访问此url次数加1
-					http_guard:incr(ip_cookie_suri,1);
+					http_guard:incr(ip_cookie_surl,1);
 				end
 			else
 				--添加记录进s_url词典
-				http_guard:set(ip_cookie_suri,1,10);
+				http_guard:set(ip_cookie_surl,1,10);
 			end
 			--判断a_url字典是否存在
-			local aurl = http_guard:get(ip_cookie_auri);
+			local aurl = http_guard:get(ip_cookie_aurl);
 			if aurl then
 				--判断此用户总访问数是否超过限制
 				if aurl > a_url_max then
@@ -67,18 +67,18 @@ if cookie_enable == 1 then
 					ngx.exit(444);
 				else
 					--该用户访问此url次数加1
-					http_guard:incr(ip_cookie_auri,1);
+					http_guard:incr(ip_cookie_aurl,1);
 				end	
 			else
 				--添加记录进a_url词典
-				http_guard:set(ip_cookie_auri,1,10);
+				http_guard:set(ip_cookie_aurl,1,10);
 			end
 		end	
 	end
 else
 	--分别定义用于记录动态,静态,所有url的key
 	local ip_durl = ngx.md5(table.concat({ip,"durl"}));
-	local ip_suri = ngx.md5(table.concat({ip,uri}));
+	local ip_surl = ngx.md5(table.concat({ip,uri}));
 	local ip_aurl = ngx.md5(table.concat({ip,"aurl"}));
 	local baduser,_=http_guard:get(ip)
 	--判断此用户是否在黑名单
@@ -107,7 +107,7 @@ else
 			end	
 		else
 			--计算ip与cookie,uri的md5,用于限制单个url请求速度
-			local surl = http_guard:get(ip_suri);
+			local surl = http_guard:get(ip_surl);
 			local aurl = http_guard:get(ip_aurl);
 			--判断s_url字典是否存在
 			if surl then
@@ -120,11 +120,11 @@ else
 					ngx.exit(444);
 				else
 					--该用户访问此url次数加1
-					http_guard:incr(ip_suri,1);
+					http_guard:incr(ip_surl,1);
 				end
 			else
 				--添加记录进s_url词典
-				http_guard:set(ip_suri,1,10);
+				http_guard:set(ip_surl,1,10);
 			end
 			--判断a_url字典是否存在
 			if aurl then
