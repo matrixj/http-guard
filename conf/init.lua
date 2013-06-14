@@ -1,11 +1,8 @@
 --------------全局设置-----------------
 http_guard = ngx.shared.http_guard; --声明一个字典
-ban_time = 600; --黑名单时间,单位:秒.
-
---cookie标记开关,用来解决多用户共享ip上网误判的问题.
---攻击者也可能利用cookie跳过限制
---0为关闭,1为开启.
-cookie_enable = 0;
+ban_time = 10; --黑名单时间,单位:秒.
+cookie_enable = 0;--cookie标记开关,用来解决多用户共享ip上网误判的问题.0为关闭,1为开启.
+cookie_name = "httpguard"; --如果怀疑攻击者利用cookie跳过限制,可以修改此cookie_name进行防伪
 
 -----------静态资源变量设置--------------
 
@@ -24,12 +21,5 @@ disabled_php_dir = "(.*/(attachments|js|upimg|images|css|uploadfiles|html|upload
 
 ----------使用memcached时用到---------------
 
---[[
-local memcached = require "resty.memcached"
-local memc, err = memcached:new(
-
-
-
-
-
-]]
+--memcached_server="127.0.0.1";
+--memcached_port=11211;
