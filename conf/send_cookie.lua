@@ -5,5 +5,5 @@ local cookie = ngx.var.cookie_httpguard;
 if not cookie and cookie_enable == 1 then
 	math.randomseed( os.time() );
     local random=math.random(100000000,999999999);
-	ngx.header['Set-Cookie'] = "httpguard="..random.."; path=/"
+	ngx.header['Set-Cookie'] = cookie_name.."="..random.."; path=/"
 end	
